@@ -1,36 +1,48 @@
 const express = require('express');
+const requestIp = require('request-ip');
 const axios = require('axios');
-const { ip } = require('address');
+require('dotenv').config();
 
 const app = express();
-const PORT = 3000;
-const IPSTACK_API_KEY = 'YOUR_IPSTACK_API_KEY'; // Replace with your actual API key from IPStack
-const OPENWEATHERMAP_API_KEY = 'YOUR_OPENWEATHERMAP_API_KEY'; // Replace with your actual API key from OpenWeatherMap
+const port = process.env.PORT || 3000;
+const api_key = process.env.OPENWEATHERMAP_API_KEY;
+
+// Configure middleware to get client IP from headers
+app.use(requestIp.mw());
 
 app.get('/api/hello', async (req, res) => {
     const visitorName = req.query.visitor_name || 'Visitor';
-    const clientIp = ip(); // Using address package to get the IP address
 
     try {
-        // Fetch location data using IPStack API
-        const locationResponse = await axios.get(`http://api.ipstack.com/${clientIp}?access_key=${IPSTACK_API_KEY}`);
-        const { city, latitude, longitude } = locationResponse.data;
+        // Get client's real IP address from headers
+        const clientIp = req.clientIp;
+        console.log(`Client IP: ${clientIp}`);
+
+        // Fetch location data using ip-api.com or similar service
+        const locationResponse = await axios.get(`http://ip-api.com/json/${clientIp}`);
+        console.log(locationResponse.data); // Log location data for debugging
+
+        const { city, lat, lon } = locationResponse.data;
+
+        if (!city || !lat || !lon) {
+            throw new Error('Location data not available');
+        }
 
         // Fetch weather data from OpenWeatherMap API using the latitude and longitude
-        const weatherResponse = await axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${OPENWEATHERMAP_API_KEY}`);
+        const weatherResponse = await axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${api_key}`);
         const temperature = weatherResponse.data.main.temp;
 
         res.json({
             client_ip: clientIp,
             location: city,
-            greeting: `Hello, ${visitorName}!, the temperature is ${temperature} degrees Celsius in ${city}`
+            greeting: `Hello, ${visitorName}! The temperature is ${temperature} degrees Celsius in ${city}.`
         });
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ error: 'Unable to fetch location or weather data' });
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });

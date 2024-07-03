@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon app.js"
+    "start": "nodemon app.mjs",
+    "type": "module"
   },
   "keywords": [],
   "author": "",
@@ -13,7 +14,10 @@
   "dependencies": {
     "address": "^2.0.3",
     "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "public-ip": "^6.0.2",
+    "request-ip": "^3.3.0"
   }
 }
